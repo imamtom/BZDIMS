@@ -1,0 +1,50 @@
+./zokrates compute-witness -a 0 1 189132189182431020640524106664383933115 143319346215346666389189443859829410816 97220313237855474150291445468082620032 78240917575658792962114022772423340458 189032883219331084714583889756021522840 28085979100743941572403864230256533436 0 2 3 4
+
+import "hashes/sha256/512bitPadded.code" as sha256
+import "utils/pack/nonStrictUnpack256.code" as unpack256
+import "utils/pack/unpack128.code" as unpack128
+import "utils/pack/pack128.code" as pack128
+import "hashes/sha256/256bitPadded.code" as sha256duan
+
+def toz(field[2] a, field pk, field s) -> (field[2]):
+    field[128] una0 = unpack128(a[0])
+    field[128] una1 = unpack128(a[1])
+    field[256] unpacka = [...una0, ...una1]
+    field[128] unpk = unpack128(pk)
+    field[128] uns = unpack128(s)
+    field[256] unpackb = [...unpk, ...uns]
+    h = sha256(unpacka,unpackb)
+    field hp1 = pack128(h[..128])
+    field hp2 = pack128(h[128..])
+    return [hp1,hp2]
+    
+def sktopk(field[2] sk) -> (field[2]):
+    field[128] unsk0 = unpack128(sk[0])
+    field[128] unsk1 = unpack128(sk[1])
+    field[256] unpacksk = [...unsk0, ...unsk1]
+    h = sha256duan(unpacksk)
+    field hp1 = pack128(h[..128])
+    field hp2 = pack128(h[128..])
+    return [hp1,hp2]   
+
+def ton(field[2] sk, field s) -> (field[2]):
+    field[128] unsk0 = unpack128(sk[0])
+    field[128] unsk1 = unpack128(sk[1])
+    field[256] unpackna = [...[0; 128], ...unsk0]
+    field[128] uns = unpack128(s)
+    field[256] unpacknb = [...unsk1, ...uns]
+    h = sha256(unpackna, unpacknb)
+    field hp1 = pack128(h[..128])
+    field hp2 = pack128(h[128..])
+    return [hp1,hp2] 
+
+def main(field[2] a, field[2] z, field[2] ne, private field[2] sk, private field s, private field e ) -> (field):
+    field[2] pkp = sktopk(sk)
+    field pk = pkp[0]
+    field[2] zp = toz(a, pk, s)
+    zp[0] == z[0]
+    zp[1] == z[1]
+    field[2] nep = ton(sk, e)
+    nep[0] == ne[0]
+    nep[1] == ne[1]
+    return 1
